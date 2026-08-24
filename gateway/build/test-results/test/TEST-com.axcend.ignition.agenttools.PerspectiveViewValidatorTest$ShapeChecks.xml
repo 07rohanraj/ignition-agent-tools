@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-08-23T09:53:34" hostname="AXLAP219" time="0.167">
+  <properties/>
+  <testcase name="childNotObjectFails()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.085"/>
+  <testcase name="udtParameterBindingRecognized()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.011"/>
+  <testcase name="metaNotObjectFails()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.005"/>
+  <testcase name="suspiciousTypeFormatWarns()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.002"/>
+  <testcase name="wrapperRootNotObjectDoesNotCrash()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.004"/>
+  <testcase name="negativeGrowAndNonNumericGrowWarn()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.008"/>
+  <testcase name="propConfigAndEventEntriesShouldBeObjects()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.003"/>
+  <testcase name="layoutMustBeObjectWhenPresent()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.002"/>
+  <testcase name="propConfigAndEventsMustBeObjects()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.002"/>
+  <testcase name="plainPropWithTypeAndConfigIsNotABinding()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.001"/>
+  <testcase name="transformsArrayIsValidAndCountsBinding()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.005"/>
+  <testcase name="statsTrackDepth()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.003"/>
+  <testcase name="issueCapStopsRunawayValidation()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.01"/>
+  <testcase name="childrenNotArrayFails()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ShapeChecks" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

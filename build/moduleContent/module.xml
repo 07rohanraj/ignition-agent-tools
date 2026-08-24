@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modules>
+	<module>
+		<name>AI Agent Tools</name>
+		<id>com.axcend.ignition.agenttools</id>
+		<version>0.1.0-SNAPSHOT</version>
+		<description>Gateway REST toolkit for AI agents working on Ignition projects: Perspective view JSON validation, headless script console, tag/query/project inspection.</description>
+		<requiredIgnitionVersion>8.3.7</requiredIgnitionVersion>
+		<freeModule>false</freeModule>
+		<hook scope="G">com.axcend.ignition.agenttools.AgentToolsHook</hook>
+		<requiredFrameworkVersion>8</requiredFrameworkVersion>
+		<jar scope="G">gateway-0.1.0-SNAPSHOT.jar</jar>
+	</module>
+</modules>

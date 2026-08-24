@@ -1,0 +1,30 @@
+import org.gradle.api.initialization.resolve.RepositoriesMode
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven {
+            url = uri("https://nexus.inductiveautomation.com/repository/public")
+        }
+        mavenCentral()
+    }
+}
+
+plugins {
+    // Lets Gradle auto-provision the JDK 17 toolchain when it is not installed locally.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        maven {
+            url = uri("https://nexus.inductiveautomation.com/repository/public")
+        }
+        mavenCentral()
+    }
+}
+
+rootProject.name = "ignition-agent-tools"
+
+include("gateway")

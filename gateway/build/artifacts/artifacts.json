@@ -1,0 +1,11 @@
+{
+    "projectPath": ":gateway",
+    "projectName": "gateway",
+    "scope": "G",
+    "artifacts": [
+        {
+            "id": "com.axcend.ignition.agenttools:gateway:0.1.0-SNAPSHOT",
+            "jarName": "gateway-0.1.0-SNAPSHOT.jar"
+        }
+    ]
+}

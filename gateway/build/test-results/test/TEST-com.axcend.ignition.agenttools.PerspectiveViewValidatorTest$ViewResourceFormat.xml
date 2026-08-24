@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ViewResourceFormat" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-08-23T09:53:34" hostname="AXLAP219" time="0.02">
+  <properties/>
+  <testcase name="missingRootTypeInViewWrapper()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ViewResourceFormat" time="0.002"/>
+  <testcase name="viewKeysMustBeObjects()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ViewResourceFormat" time="0.002"/>
+  <testcase name="fullViewResourceValidatesRootComponent()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$ViewResourceFormat" time="0.012"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$Bindings" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-08-23T09:53:34" hostname="AXLAP219" time="0.008">
+  <properties/>
+  <testcase name="plainPropsWithMatchingKeysAreNotBindings()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$Bindings" time="0.001"/>
+  <testcase name="transformsMustBeArray()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$Bindings" time="0.002"/>
+  <testcase name="bindingMissingConfigFails()" classname="com.axcend.ignition.agenttools.PerspectiveViewValidatorTest$Bindings" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

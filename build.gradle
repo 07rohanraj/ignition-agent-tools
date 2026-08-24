@@ -1,0 +1,63 @@
+plugins {
+    id 'base'
+    id 'io.ia.sdk.modl' version '0.1.1'
+}
+
+group = findProperty('group')
+version = findProperty('version')
+
+ext {
+    ignitionVersion = findProperty('ignitionVersion') ?: '8.3.7'
+    moduleId = 'com.axcend.ignition.agenttools'
+    moduleFileName = 'ai-agent-tools'
+    moduleName = 'AI Agent Tools'
+    moduleVendor = findProperty('moduleVendor') ?: 'Axcend'
+}
+
+allprojects {
+    group = rootProject.group
+    version = rootProject.version
+}
+
+subprojects {
+    apply plugin: 'java-library'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+        withSourcesJar()
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.release = 17
+        options.encoding = 'UTF-8'
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+}
+
+ignitionModule {
+    name = rootProject.ext.moduleName
+    fileName = rootProject.ext.moduleFileName
+    id = rootProject.ext.moduleId
+    moduleVersion = project.version.toString()
+    moduleDescription = "Gateway REST toolkit for AI agents working on Ignition projects: Perspective view JSON validation, headless script console, tag/query/project inspection."
+    requiredIgnitionVersion = rootProject.ext.ignitionVersion
+    projectScopes = [
+        ':gateway': 'G'
+    ]
+    moduleDependencies = [:]
+    hooks = [
+        'com.axcend.ignition.agenttools.AgentToolsHook': 'G'
+    ]
+    skipModlSigning = true
+    metaInfo.put('javaVersion', '17')
+    metaInfo.put('vendor', rootProject.ext.moduleVendor)
+}
+
+tasks.withType(io.ia.sdk.gradle.modl.task.Deploy).configureEach {
+    hostGateway = System.getenv('IGNITION_DEV_GATEWAY') ?: 'http://localhost:8088'
+}
