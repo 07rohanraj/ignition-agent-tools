@@ -106,6 +106,34 @@ public class AgentToolsHook extends AbstractGatewayModuleHook {
                 .method(HttpMethod.POST)
                 .accessControl(AccessControlStrategy.OPEN_ROUTE)
                 .mount();
+
+        routes.newRoute("/diagnostics/view")
+                .type(RouteGroup.TYPE_JSON)
+                .handler(routeHandlers::diagnosticsView)
+                .method(HttpMethod.POST)
+                .accessControl(AccessControlStrategy.OPEN_ROUTE)
+                .mount();
+
+        routes.newRoute("/diagnostics/component")
+                .type(RouteGroup.TYPE_JSON)
+                .handler(routeHandlers::diagnosticsComponent)
+                .method(HttpMethod.POST)
+                .accessControl(AccessControlStrategy.OPEN_ROUTE)
+                .mount();
+
+        routes.newRoute("/diagnostics/binding")
+                .type(RouteGroup.TYPE_JSON)
+                .handler(routeHandlers::diagnosticsBinding)
+                .method(HttpMethod.POST)
+                .accessControl(AccessControlStrategy.OPEN_ROUTE)
+                .mount();
+
+        routes.newRoute("/diagnostics/logs")
+                .type(RouteGroup.TYPE_JSON)
+                .handler(routeHandlers::diagnosticsLogs)
+                .method(HttpMethod.POST)
+                .accessControl(AccessControlStrategy.OPEN_ROUTE)
+                .mount();
     }
 
     @Override

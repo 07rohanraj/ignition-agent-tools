@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=edge"/>
+<title>Test results - JsonSchemaValidatorTest</title>
+<link href="../css/base-style.css" rel="stylesheet" type="text/css"/>
+<link href="../css/style.css" rel="stylesheet" type="text/css"/>
+<script src="../js/report.js" type="text/javascript"></script>
+</head>
+<body>
+<div id="content">
+<h1>JsonSchemaValidatorTest</h1>
+<div class="breadcrumbs">
+<a href="../index.html">all</a> &gt; 
+<a href="../packages/com.axcend.ignition.agenttools.html">com.axcend.ignition.agenttools</a> &gt; JsonSchemaValidatorTest</div>
+<div id="summary">
+<table>
+<tr>
+<td>
+<div class="summaryGroup">
+<table>
+<tr>
+<td>
+<div class="infoBox" id="tests">
+<div class="counter">4</div>
+<p>tests</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="failures">
+<div class="counter">0</div>
+<p>failures</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="ignored">
+<div class="counter">0</div>
+<p>ignored</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="duration">
+<div class="counter">0.039s</div>
+<p>duration</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</td>
+<td>
+<div class="infoBox success" id="successRate">
+<div class="percent">100%</div>
+<p>successful</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div id="tabs">
+<ul class="tabLinks">
+<li>
+<a href="#tab0">Tests</a>
+</li>
+<li>
+<a href="#tab1">Standard output</a>
+</li>
+</ul>
+<div id="tab0" class="tab">
+<h2>Tests</h2>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Duration</th>
+<th>Result</th>
+</tr>
+</thead>
+<tr>
+<td class="success">missingRequiredFieldYieldsViolation()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">nullSchemaThrows()</td>
+<td class="success">0.006s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">validDocumentYieldsNoViolations()</td>
+<td class="success">0.002s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">wrongTypeYieldsViolation()</td>
+<td class="success">0.028s</td>
+<td class="success">passed</td>
+</tr>
+</table>
+</div>
+<div id="tab1" class="tab">
+<h2>Standard output</h2>
+<span class="code">
+<pre>22:32:55.143 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.TypeValidator -- validate( {&quot;count&quot;:&quot;not-an-integer&quot;}, {&quot;type&quot;:&quot;object&quot;,&quot;properties&quot;:{&quot;count&quot;:{&quot;type&quot;:&quot;integer&quot;}},&quot;required&quot;:[&quot;count&quot;]}, $)
+22:32:55.150 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.PropertiesValidator -- validate( {&quot;count&quot;:&quot;not-an-integer&quot;}, {&quot;type&quot;:&quot;object&quot;,&quot;properties&quot;:{&quot;count&quot;:{&quot;type&quot;:&quot;integer&quot;}},&quot;required&quot;:[&quot;count&quot;]}, $)
+22:32:55.151 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.TypeValidator -- validate( &quot;not-an-integer&quot;, {&quot;type&quot;:&quot;object&quot;,&quot;properties&quot;:{&quot;count&quot;:{&quot;type&quot;:&quot;integer&quot;}},&quot;required&quot;:[&quot;count&quot;]}, $.count)
+22:32:55.153 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.RequiredValidator -- validate( {&quot;count&quot;:&quot;not-an-integer&quot;}, {&quot;type&quot;:&quot;object&quot;,&quot;properties&quot;:{&quot;count&quot;:{&quot;type&quot;:&quot;integer&quot;}},&quot;required&quot;:[&quot;count&quot;]}, $)
+22:32:55.159 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.TypeValidator -- validate( {&quot;other&quot;:1}, {&quot;type&quot;:&quot;object&quot;,&quot;properties&quot;:{&quot;name&quot;:{&quot;type&quot;:&quot;string&quot;}},&quot;required&quot;:[&quot;name&quot;]}, $)
+22:32:55.159 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.PropertiesValidator -- validate( {&quot;other&quot;:1}, {&quot;type&quot;:&quot;object&quot;,&quot;properties&quot;:{&quot;name&quot;:{&quot;type&quot;:&quot;string&quot;}},&quot;required&quot;:[&quot;name&quot;]}, $)
+22:32:55.160 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.RequiredValidator -- validate( {&quot;other&quot;:1}, {&quot;type&quot;:&quot;object&quot;,&quot;properties&quot;:{&quot;name&quot;:{&quot;type&quot;:&quot;string&quot;}},&quot;required&quot;:[&quot;name&quot;]}, $)
+22:32:55.162 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.TypeValidator -- validate( {&quot;name&quot;:&quot;Motor&quot;}, {&quot;type&quot;:&quot;object&quot;,&quot;properties&quot;:{&quot;name&quot;:{&quot;type&quot;:&quot;string&quot;}},&quot;required&quot;:[&quot;name&quot;]}, $)
+22:32:55.163 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.PropertiesValidator -- validate( {&quot;name&quot;:&quot;Motor&quot;}, {&quot;type&quot;:&quot;object&quot;,&quot;properties&quot;:{&quot;name&quot;:{&quot;type&quot;:&quot;string&quot;}},&quot;required&quot;:[&quot;name&quot;]}, $)
+22:32:55.163 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.TypeValidator -- validate( &quot;Motor&quot;, {&quot;type&quot;:&quot;object&quot;,&quot;properties&quot;:{&quot;name&quot;:{&quot;type&quot;:&quot;string&quot;}},&quot;required&quot;:[&quot;name&quot;]}, $.name)
+22:32:55.163 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.RequiredValidator -- validate( {&quot;name&quot;:&quot;Motor&quot;}, {&quot;type&quot;:&quot;object&quot;,&quot;properties&quot;:{&quot;name&quot;:{&quot;type&quot;:&quot;string&quot;}},&quot;required&quot;:[&quot;name&quot;]}, $)
+</pre>
+</span>
+</div>
+</div>
+<div id="footer">
+<p>
+<div>
+<label class="hidden" id="label-for-line-wrapping-toggle" for="line-wrapping-toggle">Wrap lines
+<input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
+</label>
+</div>Generated by 
+<a href="http://www.gradle.org">Gradle 8.10</a> at 30-Aug-2026, 10:32:57 pm</p>
+</div>
+</div>
+</body>
+</html>

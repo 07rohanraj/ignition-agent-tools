@@ -26,6 +26,10 @@
 7. [Error Code Reference](#7-error-code-reference)
 8. [Build & Deploy](#8-build--deploy)
 
+> See also: [Native Component Schema Validation](NATIVE-COMPONENT-SCHEMA-VALIDATION.md) — plain-
+> language summary of the native `props` schema validation (what was done, which native functions,
+> what it enables).
+
 ---
 
 ## 1. Source Layout
@@ -40,12 +44,14 @@ gateway/src/main/java/com/axcend/ignition/agenttools/
 │
 └── validate/
     ├── ComponentCatalog.java            (74 lines)   Static catalog of known ia.* component IDs
-    ├── PerspectiveViewValidator.java    (416 lines)  Pure-logic structural validator
+    ├── PerspectiveViewValidator.java    (526 lines)  Pure-logic structural + native-schema validator
+    ├── PerspectiveComponentSchemaCatalog.java (230 lines)  Native component props schemas from the perspective-common classpath
     └── ValidationIssue.java             (19 lines)   Issue record {path, code, severity, message}
 
 gateway/src/test/java/com/axcend/ignition/agenttools/
 │
-├── PerspectiveViewValidatorTest.java    (546 lines)  ~25 tests covering all validation rules
+├── PerspectiveViewValidatorTest.java    (675 lines)  ~40 tests covering all validation rules
+├── PerspectiveComponentSchemaCatalogTest.java (94 lines)  Native schema catalog tests
 └── ComponentCatalogTest.java            (61 lines)   Catalog integrity tests
 ```
 
@@ -97,7 +103,14 @@ Accepts three input forms (pick one):
 {
   "viewJson": {
     "meta": {},
-    "props": {},
+    "props": {
+      "direction": "row",
+      "wrap": "nowrap",
+      "justify": "flex-start",
+      "alignItems": "stretch",
+      "alignContent": "stretch",
+      "style": {}
+    },
     "type": "ia.container.flex",
     "children": []
   }
@@ -315,14 +328,21 @@ See [Section 7: Error Code Reference](#7-error-code-reference) for all codes.
 
 ### 3.1 How Validation Works
 
-**The validation is entirely custom — it does NOT use Ignition's built-in validation API.**
+**Validation is hybrid: hand-written structural rules + Ignition's native JSON Schema engine.**
 
-`PerspectiveViewValidator` is pure structural logic operating on parsed Gson JSON trees. It requires no gateway services, no running Perspective instance, and no component registry. The only Ignition dependency in the validate package is Ignition-common's shaded Gson for JSON parsing.
+`PerspectiveViewValidator` operates on parsed Gson JSON trees and requires no gateway services, no
+running Perspective instance, and… no live component registry. **Since 2026-08-30** it additionally
+validates every known component's `props` object against the **native Perspective component schema**
+packaged in `perspective-common`'s descriptor files (`*.components.json`), compiled with Ignition's
+own `JsonSchema`/`JsonSchemaFactory`. See §3.2b.
 
 This design was deliberate:
-- Fully unit-testable without a running gateway (all tests run offline)
+- Fully unit-testable without a running gateway (all tests run offline — the descriptor files are on
+  the module classpath)
 - No dependency on live Perspective internals
 - Fast — no round-trips to gateway services
+- Native fidelity — prop types, enums, required keys, and `additionalProperties` restrictions come
+  straight from the schemas the Designer itself uses
 
 ### 3.2 What ComponentCatalog Does
 
@@ -338,6 +358,29 @@ This design was deliberate:
 **Critical design decision:** Unknown `ia.*` types produce **warnings**, not errors. The catalog can lag behind new Ignition versions, and third-party modules introduce custom types. This is documented in `ComponentCatalog` javadoc and tested in `PerspectiveViewValidatorTest`.
 
 Non-`ia.` types (third-party module components) pass silently with no warning.
+
+### 3.2b What PerspectiveComponentSchemaCatalog Does
+
+`PerspectiveComponentSchemaCatalog.java` loads the exact descriptor files Perspective's real
+`ComponentRegistry` reads (`ia.components.json`, `barcode.component.json`,
+`perspective-timeseries.components.json`, `perspective-googlemap.components.json`,
+`perspective-amcharts.components.json`, `perspective-map.components.json`,
+`pdf-viewer.components.json`) from the classpath, and compiles each component's `props` schema into a
+native `JsonSchema` via `JsonSchemaFactory`.
+
+- `find(typeId)` → `Optional<ComponentSchema>` (raw schema element + compiled `JsonSchema` +
+  resolved URN-ref props)
+- When a component's `props` object exists, `checkComponentSchema()` validates it with the native
+  engine → issues coded `SCHEMA_*` (e.g. `SCHEMA_REQUIRED`, `SCHEMA_ENUM`, `SCHEMA_TYPE`,
+  `SCHEMA_ADDITIONALPROPERTIES`) at ERROR severity.
+- **URN `$ref` props** (`style`, `textStyle`, …) are pre-resolved into standalone native schemas
+  because the native `RefValidator` silently skips `urn:ignition-schema:` refs on factory-built
+  schemas (bytecode-verified in `common-8.3.7.jar`).
+- **Binding-valued props** (e.g. `{"type": "expr", "config": {...}}`) are exempted from type/enum
+  checks — a binding object is not a literal of the prop's declared type, so it would false-fail
+  strictly-typed props like `text-field.text`.
+- **Graceful degradation:** if the descriptor resources are absent, the catalog is empty and the
+  validator silently falls back to structural checks only (no crashes, no spurious errors).
 
 ### 3.3 Validation Flow
 
@@ -372,6 +415,7 @@ Format auto-detection
 Recursive walk() per node (capped at 200 issues)
        │
        ├── checkComponentType()  → DEPRECATED_ALIAS, UNKNOWN_COMPONENT_TYPE, SUSPICIOUS_TYPE_FORMAT
+       ├── checkComponentSchema()→ SCHEMA_REQUIRED, SCHEMA_ENUM, SCHEMA_TYPE, SCHEMA_ADDITIONALPROPERTIES, … (native, when the component's props schema is on the classpath)
        ├── checkMeta()           → MISSING_META, META_NOT_OBJECT, MISSING_COMPONENT_NAME
        ├── checkChildren()       → CHILDREN_NOT_ARRAY, CHILD_NOT_OBJECT, DUPLICATE_SIBLING_NAME
        ├── checkFlexLayout()     → LAYOUT_NOT_OBJECT, LAYOUT_NOT_NUMERIC, FLEX_NEGATIVE_GROW, FLEX_ZERO_GROW_NO_BASIS
@@ -399,7 +443,14 @@ ValidationResult
   "root": {
     "type": "ia.container.flex",
     "meta": {"name": "root"},
-    "props": {},
+    "props": {
+      "direction": "row",
+      "wrap": "nowrap",
+      "justify": "flex-start",
+      "alignItems": "stretch",
+      "alignContent": "stretch",
+      "style": {}
+    },
     "children": []
   }
 }
@@ -410,12 +461,23 @@ ValidationResult
 {
   "type": "ia.container.flex",
   "meta": {"name": "root"},
-  "props": {},
+  "props": {
+    "direction": "row",
+    "wrap": "nowrap",
+    "justify": "flex-start",
+    "alignItems": "stretch",
+    "alignContent": "stretch",
+    "style": {}
+  },
   "children": []
 }
 ```
 
 The validator auto-detects which format by checking for a `root` key that is an object.
+
+> Note: the examples use schema-conformant flex `props` — since 2026-08-30 a flex with bare
+> `props: {}` is reported (`SCHEMA_REQUIRED`), matching the Designer's own schema, which requires
+> `direction`, `wrap`, `justify`, `alignItems`, `alignContent`, and `style`.
 
 ### 3.5 meta.id Is Never Checked
 
@@ -433,7 +495,11 @@ Entry point. Accepts a parsed JSON element (full view resource or bare component
 
 #### `PerspectiveViewValidator.walk(JsonObject node, String path, int depth, ...)`
 
-Recursive node walker. For each component node, runs all structural checks (type, meta, children, layout, style, bindings, propConfig, events). Adds JSON-path-style location to every issue (e.g., `$.root.children[0].props.text`). Stops at `MAX_ISSUES = 200`.
+Recursive node walker. For each component node, runs all structural checks (type, meta, children, layout, style, bindings, propConfig, events) **and**, when the component's props schema is available, the native schema check (see §3.2b). Adds JSON-path-style location to every issue (e.g., `$.root.children[0].props.text`). Stops at `MAX_ISSUES = 200`.
+
+#### `PerspectiveComponentSchemaCatalog.find(String typeId)` → `Optional<ComponentSchema>`
+
+Looks up the native `props` schema for a component id (aliases resolved via `ComponentCatalog.canonicalFor` first). Returns the raw schema element, the compiled native `JsonSchema`, and any URN-ref props resolved as standalone schemas. Empty when the component is unknown or the descriptor resources are absent.
 
 #### `ComponentCatalog.isKnown(String type)` → `boolean`
 
@@ -567,6 +633,11 @@ Registers all 10 routes with the Ignition dataroutes framework. Mount path alias
 | `NOT_AN_OBJECT` | ERROR | `meta` or `props` exists but is not an object | Change to `{}` |
 | `MISSING_ROOT_TYPE` | ERROR | Root (or `$.root`) has no `type` | Add `"type": "ia.container.flex"` (or appropriate) |
 | `MISSING_COMPONENT_TYPE` | ERROR | Any node has blank/missing `type` | Add a non-blank `type` string |
+| `SCHEMA_REQUIRED` | ERROR | A `props` object is missing a prop the component's native schema requires (e.g. flex requires `direction`/`wrap`/`justify`/`alignItems`/`alignContent`/`style`) | Add the required prop(s) per the component's schema |
+| `SCHEMA_TYPE` | ERROR | A `props` value has the wrong native type (e.g. `text-field.text` must be a string) | Fix the value's type |
+| `SCHEMA_ENUM` | ERROR | A `props` value is not in the component's allowed enum | Use an allowed value |
+| `SCHEMA_ADDITIONALPROPERTIES` | ERROR | A `props` key is not in the component schema and `additionalProperties` is false | Remove the unknown key |
+| `SCHEMA_*` (others) | ERROR | Any other native schema violation (format, pattern, min/max, …) | Follow the message text |
 | `MISSING_META` | ERROR | Node has no `meta` object | Add `"meta": {"name": "componentName"}` |
 | `META_NOT_OBJECT` | ERROR | `meta` exists but is not an object | Change to `{}` |
 | `MISSING_COMPONENT_NAME` | ERROR | `meta.name` is missing or blank | Add `"name": "uniqueName"` |
@@ -603,6 +674,40 @@ Registers all 10 routes with the Ignition dataroutes framework. Mount path alias
 | `/script/exec` | `success: false` + `error` | Script error, timeout, or interruption |
 | `/query/run` | `success: false` + `error` | Named query execution failed |
 | `/tags/read` | `invalidPaths[]` | Unparseable tag paths (per-entry, not fatal) |
+
+### Diagnostic Error Codes (`/diagnostics/*`)
+
+| Code | Severity | Category | When Emitted | Fix |
+|------|----------|----------|--------------|-----|
+| `VIEW_NOT_FOUND` | ERROR | VIEW | View not found in project | Verify view path exists |
+| `INVALID_VIEW_DOCUMENT` | ERROR | VIEW | View JSON is not a valid Perspective document | Fix view JSON structure |
+| `MISSING_ROOT_COMPONENT` | ERROR | VIEW | View has no root component | Add root component |
+| `MISSING_COMPONENT_TYPE` | ERROR | COMPONENT | Component has no `type` field | Add component type |
+| `DEPRECATED_TYPE_ALIAS` | WARNING | COMPONENT | Component type is a deprecated alias | Use canonical type ID |
+| `UNKNOWN_COMPONENT_TYPE` | WARNING | COMPONENT | Component type not in standard catalog | Verify type ID |
+| `EMPTY_TAG_PATH` | ERROR | BINDING | Tag binding has empty `tagPath` | Provide tag path |
+| `MISSING_BINDING_TYPE` | ERROR | BINDING | Binding has no `type` field | Add binding type |
+| `MISSING_BINDING_CONFIG` | ERROR | BINDING | Binding has no `config` object | Add config object |
+| `INVALID_TAG_PATH` | ERROR | BINDING | Tag path format is invalid | Fix tag path format |
+| `TAG_PROVIDER_NOT_FOUND` | ERROR | BINDING | Tag provider not found | Verify tag provider exists |
+| `TAG_NOT_FOUND` | ERROR | BINDING | Tag not found at path | Verify tag exists |
+| `TAG_QUALITY_NOT_GOOD` | WARNING | BINDING | Tag exists but quality not Good | Check tag quality |
+| `TAG_VALIDATION_ERROR` | WARNING | BINDING | Error during tag validation | Check gateway connection |
+| `QUERY_NOT_FOUND` | ERROR | BINDING | Named query not found | Verify query exists |
+| `INVALID_QUERY_PARAMETERS` | ERROR | BINDING | Query parameters not an object | Fix parameters format |
+| `INVALID_POLL_RATE` | ERROR | BINDING | pollRate not a valid number | Fix pollRate value |
+| `MISSING_EXPRESSION` | ERROR | BINDING | Expression binding has no expression | Add expression |
+| `EXPRESSION_SYNTAX_ERROR` | ERROR | BINDING | Unmatched parentheses in expression | Fix expression syntax |
+| `PYTHON_IMPORT_IN_EXPRESSION` | ERROR | BINDING | Python import in expression | Use runScript() instead |
+| `CLIENT_SCOPE_FUNCTION_IN_EXPRESSION` | WARNING | BINDING | Client-scope function in gateway scope | Use gateway-scope functions |
+| `INVALID_RUNSCRIPT_PATH` | WARNING | BINDING | runScript path not dot-separated | Fix module path format |
+| `NEGATIVE_RUNSCRIPT_POLL_RATE` | WARNING | BINDING | runScript pollRate negative | Use non-negative value |
+| `INVALID_RUNSCRIPT_POLL_RATE` | WARNING | BINDING | runScript pollRate not a number | Fix pollRate value |
+| `MISSING_PROPERTY_PATH` | ERROR | BINDING | Property binding has no path | Add property path |
+| `INVALID_PROPERTY_PATH` | ERROR | BINDING | Invalid property path format | Fix path format |
+| `UNKNOWN_BINDING_TYPE` | WARNING | BINDING | Binding type not recognized | Use known binding type |
+| `COMPONENT_NOT_FOUND` | ERROR | COMPONENT | Component not found at path | Verify component path |
+| `DIAGNOSTIC_ERROR` | ERROR | STRUCTURE | Internal diagnostic error | Check logs |
 
 ---
 

@@ -1,6 +1,8 @@
 dependencies {
     compileOnly "com.inductiveautomation.ignitionsdk:gateway-api:${rootProject.ext.ignitionVersion}"
     compileOnly "com.inductiveautomation.ignitionsdk:ignition-common:${rootProject.ext.ignitionVersion}"
+    compileOnly "com.inductiveautomation.ignitionsdk:perspective-gateway:${rootProject.ext.ignitionVersion}"
+    compileOnly "com.inductiveautomation.ignitionsdk:perspective-common:${rootProject.ext.ignitionVersion}"
     // Matches the jython-ia-2.7.3.5 jar Ignition ships; needed at compile time for
     // org.python.core.PyObject in the ScriptManager API. Provided by the gateway at runtime.
     compileOnly 'org.python:jython-slim:2.7.3'
@@ -8,6 +10,13 @@ dependencies {
     // ignition-common is needed on the test runtime classpath for pure-logic tests
     // that use the Ignition Gson types.
     testImplementation "com.inductiveautomation.ignitionsdk:ignition-common:${rootProject.ext.ignitionVersion}"
+    // gateway-api provides ne native ValidationErrors / ValidationException used by
+    // ValidationErrorsMapper; needed on the test classpath to exercise the mapper.
+    testImplementation "com.inductiveautomation.ignitionsdk:gateway-api:${rootProject.ext.ignitionVersion}"
+    // Perspective classes (PerspectiveExpression, ConfigurationException, etc.) must be
+    // present on the test runtime classpath for the expression-validator tests to run.
+    testImplementation "com.inductiveautomation.ignitionsdk:perspective-common:${rootProject.ext.ignitionVersion}"
+    testImplementation "com.inductiveautomation.ignitionsdk:perspective-gateway:${rootProject.ext.ignitionVersion}"
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

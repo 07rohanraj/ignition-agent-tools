@@ -54,8 +54,14 @@ class PerspectiveViewValidatorTest {
                     {
                       "type": "ia.container.flex",
                       "meta": {"name": "Root"},
-                      "props": {},
-                      "direction": "column",
+                      "props": {
+                        "direction": "column",
+                        "wrap": "nowrap",
+                        "justify": "flex-start",
+                        "alignItems": "stretch",
+                        "alignContent": "stretch",
+                        "style": {}
+                      },
                       "children": [
                         {
                           "type": "ia.display.label",
@@ -63,7 +69,7 @@ class PerspectiveViewValidatorTest {
                           "layout": {"grow": 1}
                         },
                         {
-                          "type": "ia.chart.timeseries",
+                          "type": "ia.chart.powerchart",
                           "meta": {"name": "Chart"},
                           "layout": {"grow": 2, "shrink": 0, "basis": "200px"}
                         }
@@ -173,7 +179,10 @@ class PerspectiveViewValidatorTest {
                     {
                       "type": "ia.container.flex",
                       "meta": {"name": "R"},
-                      "props": {},
+                      "props": {
+                        "direction": "row", "wrap": "nowrap", "justify": "flex-start",
+                        "alignItems": "stretch", "alignContent": "stretch", "style": {}
+                      },
                       "children": [
                         {"type": "ia.display.label", "meta": {"name": "Same"}},
                         {"type": "ia.display.label", "meta": {"name": "Same"}}
@@ -191,7 +200,11 @@ class PerspectiveViewValidatorTest {
                     {
                       "type": "ia.container.flex",
                       "meta": {"name": "R"},
-                      "props": {"style": {"flexDirection": "column", "background-color": "#FFF"}}
+                      "props": {
+                        "direction": "row", "wrap": "nowrap", "justify": "flex-start",
+                        "alignItems": "stretch", "alignContent": "stretch",
+                        "style": {"flexDirection": "column", "backgroundColor": "#FFF"}
+                      }
                     }
                     """);
             assertTrue(result.valid());
@@ -205,7 +218,10 @@ class PerspectiveViewValidatorTest {
                     {
                       "type": "ia.container.flex",
                       "meta": {"name": "R"},
-                      "props": {},
+                      "props": {
+                        "direction": "row", "wrap": "nowrap", "justify": "flex-start",
+                        "alignItems": "stretch", "alignContent": "stretch", "style": {}
+                      },
                       "children": [
                         {"type": "ia.display.label", "meta": {"name": "L"}, "layout": {"grow": 0}}
                       ]
@@ -265,11 +281,115 @@ class PerspectiveViewValidatorTest {
                     {
                       "type": "ia.input.dropdown",
                       "meta": {"name": "D"},
-                      "props": {"value": {"type": "literal", "config": {}}}
+                      "props": {
+                        "value": {"type": "literal", "config": {}},
+                        "options": [],
+                        "style": {}
+                      }
                     }
                     """);
             assertTrue(result.valid());
             assertEquals(0, result.bindingCount());
+        }
+    }
+
+    @Nested
+    class SchemaValidation {
+
+        @Test
+        void flexWithMissingRequiredPropsFails() {
+            var result = validate("""
+                    {
+                      "type": "ia.container.flex",
+                      "meta": {"name": "R"},
+                      "props": {"style": {}}
+                    }
+                    """);
+            assertFalse(result.valid());
+            assertTrue(result.errors().stream()
+                    .anyMatch(issue -> "SCHEMA_REQUIRED".equals(issue.code())
+                            && issue.path().startsWith("$.props")));
+        }
+
+        @Test
+        void flexWithUnknownPropAndBadEnumFails() {
+            var result = validate("""
+                    {
+                      "type": "ia.container.flex",
+                      "meta": {"name": "R"},
+                      "props": {
+                        "direction": "sideways", "wrap": "nowrap", "justify": "flex-start",
+                        "alignItems": "stretch", "alignContent": "stretch", "style": {},
+                        "notARealProp": true
+                      }
+                    }
+                    """);
+            assertFalse(result.valid());
+            var found = result.errors().stream().map(ValidationIssue::code).collect(Collectors.toSet());
+            assertTrue(found.contains("SCHEMA_ENUM"), () -> "expected enum violation in " + found);
+            assertTrue(found.contains("SCHEMA_ADDITIONALPROPERTIES"),
+                    () -> "expected additionalProperties violation in " + found);
+        }
+
+        @Test
+        void styleUrnRefPropIsValidatedStandalone() {
+            var result = validate("""
+                    {
+                      "type": "ia.container.flex",
+                      "meta": {"name": "R"},
+                      "props": {
+                        "direction": "row", "wrap": "nowrap", "justify": "flex-start",
+                        "alignItems": "stretch", "alignContent": "stretch",
+                        "style": {"marginTop": "tall"}
+                      }
+                    }
+                    """);
+            assertFalse(result.valid());
+            assertTrue(result.errors().stream().anyMatch(issue ->
+                            issue.path().contains("props.style") && "SCHEMA_TYPE".equals(issue.code())),
+                    () -> "expected SCHEMA_TYPE inside props.style, got " + result.errors());
+        }
+
+        @Test
+        void bindingPropsAreExemptFromSchemaTypes() {
+            var result = validate("""
+                    {
+                      "type": "ia.input.text-field",
+                      "meta": {"name": "F"},
+                      "props": {"text": {"type": "expr", "config": {"expression": "\\"hi\\""}}}
+                    }
+                    """);
+            assertTrue(result.valid(), () -> "unexpected errors: " + codes(result));
+            assertEquals(1, result.bindingCount());
+        }
+
+        @Test
+        void literalPropWrongTypeFails() {
+            var result = validate("""
+                    {
+                      "type": "ia.input.text-field",
+                      "meta": {"name": "F"},
+                      "props": {"text": 123}
+                    }
+                    """);
+            assertFalse(result.valid());
+            assertTrue(result.errors().stream()
+                    .anyMatch(issue -> "SCHEMA_TYPE".equals(issue.code())
+                            && issue.path().endsWith("props.text")));
+        }
+
+        @Test
+        void aliasResolvesToCanonicalSchema() {
+            var result = validate("""
+                    {
+                      "type": "ia.text.label",
+                      "meta": {"name": "Old"},
+                      "props": {"alignVertical": "sideways"}
+                    }
+                    """);
+            assertFalse(result.valid(), "alias must be validated against ia.display.label's schema");
+            assertTrue(result.errors().stream()
+                    .anyMatch(issue -> "SCHEMA_ENUM".equals(issue.code())));
         }
     }
 
@@ -287,7 +407,7 @@ class PerspectiveViewValidatorTest {
                       "root": {
                         "type": "ia.container.coord",
                         "meta": {"name": "root"},
-                        "props": {},
+                        "props": {"mode": "fixed", "aspectRatio": "", "style": {}},
                         "children": [
                           {"type": "ia.display.label", "meta": {"name": "L"}, "props": {}}
                         ]
@@ -382,7 +502,10 @@ class PerspectiveViewValidatorTest {
                     {
                       "type": "ia.container.flex",
                       "meta": {"name": "R"},
-                      "props": {},
+                      "props": {
+                        "direction": "row", "wrap": "nowrap", "justify": "flex-start",
+                        "alignItems": "stretch", "alignContent": "stretch", "style": {}
+                      },
                       "children": ["not-a-component"]
                     }
                     """);
@@ -422,7 +545,10 @@ class PerspectiveViewValidatorTest {
                     {
                       "type": "ia.container.flex",
                       "meta": {"name": "R"},
-                      "props": {},
+                      "props": {
+                        "direction": "row", "wrap": "nowrap", "justify": "flex-start",
+                        "alignItems": "stretch", "alignContent": "stretch", "style": {}
+                      },
                       "children": [
                         {"type": "ia.display.label", "meta": {"name": "A"}, "layout": {"grow": -1}},
                         {"type": "ia.display.label", "meta": {"name": "B"}, "layout": {"grow": "lots"}}
@@ -487,7 +613,11 @@ class PerspectiveViewValidatorTest {
                     {
                       "type": "ia.input.dropdown",
                       "meta": {"name": "D"},
-                      "props": {"options": {"type": "basic", "config": {}}}
+                      "props": {
+                        "value": {"type": "basic", "config": {}},
+                        "options": [],
+                        "style": {}
+                      }
                     }
                     """);
             assertTrue(result.valid());
@@ -505,7 +635,9 @@ class PerspectiveViewValidatorTest {
                 children.append("{\"meta\":{\"name\":\"\"}}");
             }
             String json = "{\"type\": \"ia.container.flex\", \"meta\": {\"name\": \"R\"}, "
-                    + "\"props\": {}, \"children\": [" + children + "]}";
+                    + "\"props\": {\"direction\": \"row\", \"wrap\": \"nowrap\", \"justify\": \"flex-start\", "
+                    + "\"alignItems\": \"stretch\", \"alignContent\": \"stretch\", \"style\": {}}, "
+                    + "\"children\": [" + children + "]}";
             var result = validate(json);
             assertFalse(result.valid());
             assertTrue(result.warnings().stream()
@@ -523,21 +655,18 @@ class PerspectiveViewValidatorTest {
 
         @Test
         void statsTrackDepth() throws Exception {
-            JsonElement deep = JsonParser.parseString("""
-                    {
-                      "type": "ia.container.flex", "meta": {"name": "L0"}, "props": {},
-                      "children": [
-                        {"type": "ia.container.flex", "meta": {"name": "L1"}, "props": {},
-                         "children": [
-                           {"type": "ia.container.flex", "meta": {"name": "L2"}, "props": {},
-                            "children": [
-                              {"type": "ia.display.label", "meta": {"name": "L3"}, "props": {}}
-                            ]}
-                         ]}
-                      ]
-                    }
-                    """);
-            var result = validator.validate(deep);
+            String flexProps = "\"props\":{\"direction\":\"row\",\"wrap\":\"nowrap\","
+                    + "\"justify\":\"flex-start\",\"alignItems\":\"stretch\","
+                    + "\"alignContent\":\"stretch\",\"style\":{}}";
+            String json = "{\"type\":\"ia.container.flex\",\"meta\":{\"name\":\"L0\"}," + flexProps
+                    + ", \"children\":["
+                    + "{\"type\":\"ia.container.flex\",\"meta\":{\"name\":\"L1\"}," + flexProps
+                    + ", \"children\":["
+                    + "{\"type\":\"ia.container.flex\",\"meta\":{\"name\":\"L2\"}," + flexProps
+                    + ", \"children\":["
+                    + "{\"type\":\"ia.display.label\",\"meta\":{\"name\":\"L3\"},\"props\":{}}"
+                    + "]}]}]}";
+            var result = validator.validate(JsonParser.parseString(json));
             assertTrue(result.valid());
             assertEquals(4, result.componentCount());
             assertEquals(3, result.maxDepth());

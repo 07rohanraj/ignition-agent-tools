@@ -1,7 +1,14 @@
 package com.axcend.ignition.agenttools;
 
+import com.axcend.ignition.agenttools.diagnostic.BindingDiagnostics;
+import com.axcend.ignition.agenttools.diagnostic.ComponentDiagnostics;
+import com.axcend.ignition.agenttools.diagnostic.DiagnosticService;
+import com.axcend.ignition.agenttools.diagnostic.LogCaptureService;
+import com.axcend.ignition.agenttools.diagnostic.ViewDiagnostics;
+import com.axcend.ignition.agenttools.validate.JsonSchemaValidator;
 import com.axcend.ignition.agenttools.validate.PerspectiveViewValidator;
 import com.axcend.ignition.agenttools.validate.PerspectiveViewValidator.ValidationResult;
+import com.axcend.ignition.agenttools.validate.ValidationIssue;
 import com.inductiveautomation.ignition.common.gson.Gson;
 import com.inductiveautomation.ignition.common.gson.JsonElement;
 import com.inductiveautomation.ignition.common.gson.JsonObject;
@@ -35,13 +42,18 @@ public class AgentToolsRouteHandlers {
     private final GatewayContext gatewayContext;
     private final Gson gson = new Gson();
     private final PerspectiveViewValidator viewValidator = new PerspectiveViewValidator();
+    private final JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator();
     private final GatewayScriptService scriptService;
     private final GatewayIntrospectionService introspectionService;
+    private final DiagnosticService diagnosticService;
+    private final LogCaptureService logCaptureService;
 
     public AgentToolsRouteHandlers(GatewayContext gatewayContext) {
         this.gatewayContext = gatewayContext;
         this.scriptService = new GatewayScriptService(gatewayContext);
         this.introspectionService = new GatewayIntrospectionService(gatewayContext);
+        this.diagnosticService = new DiagnosticService(gatewayContext);
+        this.logCaptureService = new LogCaptureService();
     }
 
     public void shutdownServices() {
@@ -61,7 +73,11 @@ public class AgentToolsRouteHandlers {
                 "tags.browse",
                 "tags.read",
                 "query.run",
-                "projects.resources"
+                "projects.resources",
+                "diagnostics.view",
+                "diagnostics.component",
+                "diagnostics.binding",
+                "diagnostics.logs"
         ));
         return json(payload);
     }
@@ -91,7 +107,31 @@ public class AgentToolsRouteHandlers {
             }
 
             ValidationResult result = viewValidator.validate(viewJson);
-            return json(result.toMap());
+            Map<String, Object> payload = new LinkedHashMap<>(result.toMap());
+
+            // Optional native JSON Schema validation: when a 'schema' or 'schemaJson' is supplied,
+            // run the document through Ignition's native JsonSchema validator and merge the
+            // violations into the errors list.
+            JsonElement schemaElement = null;
+            if (request.has("schema") && !request.get("schema").isJsonNull()) {
+                schemaElement = request.get("schema");
+            } else if (request.has("schemaJson")) {
+                schemaElement = JsonParser.parseString(request.get("schemaJson").getAsString());
+            }
+            if (schemaElement != null) {
+                List<Object> errors = new ArrayList<>(
+                        result.errors().stream().map(ValidationIssue::toMap).toList());
+                for (JsonSchemaValidator.SchemaViolation violation
+                        : jsonSchemaValidator.validate(schemaElement, viewJson)) {
+                    errors.add(jsonSchemaValidator.violationToMap(violation));
+                }
+                payload.put("errors", errors);
+                if (!errors.isEmpty()) {
+                    payload.put("valid", false);
+                }
+            }
+
+            return json(payload);
         } catch (JsonParseException exception) {
             Map<String, Object> parseError = new LinkedHashMap<>();
             parseError.put("valid", false);
@@ -246,6 +286,166 @@ public class AgentToolsRouteHandlers {
         } catch (Exception exception) {
             logger.warn("Project resource listing failed", exception);
             return error(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, String.valueOf(exception.getMessage()));
+        }
+    }
+
+    // --- diagnostics ----------------------------------------------------------------------------
+
+    /**
+     * POST /diagnostics/view
+     * Get comprehensive diagnostics for a Perspective view.
+     */
+    public Object diagnosticsView(RequestContext requestContext, HttpServletResponse response) {
+        Object denial = requireGatewayPermission(requestContext, response, PermissionType.READ);
+        if (denial != null) {
+            return denial;
+        }
+        try {
+            JsonObject request = JsonParser.parseString(requestContext.readBody()).getAsJsonObject();
+            String project = optString(request, "project");
+            String viewPath = optString(request, "viewPath");
+
+            if (project == null || project.isBlank()) {
+                return error(response, HttpServletResponse.SC_BAD_REQUEST, "'project' is required.");
+            }
+            if (viewPath == null || viewPath.isBlank()) {
+                return error(response, HttpServletResponse.SC_BAD_REQUEST, "'viewPath' is required.");
+            }
+
+            ViewDiagnostics diagnostics = diagnosticService.getViewDiagnostics(project, viewPath);
+            Map<String, Object> payload = new LinkedHashMap<>(diagnostics.toMap());
+            // Optional native interop: when requested, also emit Ignition's native ValidationErrors
+            // container (message/field-oriented, no code/severity/suggestions) so gateway consumers
+            // can consume the findings in standard Ignition shape.
+            Boolean asNative = optBoolean(request, "native");
+            if (Boolean.TRUE.equals(asNative)) {
+                payload.put("nativeErrors",
+                        diagnosticService.getViewNativeValidationErrors(project, viewPath));
+            }
+            return json(payload);
+        } catch (JsonParseException exception) {
+            return error(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "Request body must be JSON: " + exception.getMessage());
+        } catch (Exception exception) {
+            logger.warn("View diagnostics failed", exception);
+            return error(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+    }
+
+    /**
+     * POST /diagnostics/component
+     * Get diagnostics for a specific component.
+     */
+    public Object diagnosticsComponent(RequestContext requestContext, HttpServletResponse response) {
+        Object denial = requireGatewayPermission(requestContext, response, PermissionType.READ);
+        if (denial != null) {
+            return denial;
+        }
+        try {
+            JsonObject request = JsonParser.parseString(requestContext.readBody()).getAsJsonObject();
+            String project = optString(request, "project");
+            String viewPath = optString(request, "viewPath");
+            String componentPath = optString(request, "componentPath");
+
+            if (project == null || project.isBlank()) {
+                return error(response, HttpServletResponse.SC_BAD_REQUEST, "'project' is required.");
+            }
+            if (viewPath == null || viewPath.isBlank()) {
+                return error(response, HttpServletResponse.SC_BAD_REQUEST, "'viewPath' is required.");
+            }
+            if (componentPath == null || componentPath.isBlank()) {
+                return error(response, HttpServletResponse.SC_BAD_REQUEST, "'componentPath' is required.");
+            }
+
+            ComponentDiagnostics diagnostics = diagnosticService.getComponentDiagnostics(
+                    project, viewPath, componentPath);
+            return json(diagnostics.toMap());
+        } catch (JsonParseException exception) {
+            return error(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "Request body must be JSON: " + exception.getMessage());
+        } catch (Exception exception) {
+            logger.warn("Component diagnostics failed", exception);
+            return error(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+    }
+
+    /**
+     * POST /diagnostics/binding
+     * Get diagnostics for a specific binding.
+     */
+    public Object diagnosticsBinding(RequestContext requestContext, HttpServletResponse response) {
+        Object denial = requireGatewayPermission(requestContext, response, PermissionType.READ);
+        if (denial != null) {
+            return denial;
+        }
+        try {
+            JsonObject request = JsonParser.parseString(requestContext.readBody()).getAsJsonObject();
+            String project = optString(request, "project");
+            String viewPath = optString(request, "viewPath");
+            String componentPath = optString(request, "componentPath");
+            String propertyPath = optString(request, "propertyPath");
+
+            if (project == null || project.isBlank()) {
+                return error(response, HttpServletResponse.SC_BAD_REQUEST, "'project' is required.");
+            }
+            if (viewPath == null || viewPath.isBlank()) {
+                return error(response, HttpServletResponse.SC_BAD_REQUEST, "'viewPath' is required.");
+            }
+            if (componentPath == null || componentPath.isBlank()) {
+                return error(response, HttpServletResponse.SC_BAD_REQUEST, "'componentPath' is required.");
+            }
+            if (propertyPath == null || propertyPath.isBlank()) {
+                return error(response, HttpServletResponse.SC_BAD_REQUEST, "'propertyPath' is required.");
+            }
+
+            BindingDiagnostics diagnostics = diagnosticService.getBindingDiagnostics(
+                    project, viewPath, componentPath, propertyPath);
+            return json(diagnostics.toMap());
+        } catch (JsonParseException exception) {
+            return error(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "Request body must be JSON: " + exception.getMessage());
+        } catch (Exception exception) {
+            logger.warn("Binding diagnostics failed", exception);
+            return error(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, exception.getMessage());
+        }
+    }
+
+    /**
+     * POST /diagnostics/logs
+     * Get recent gateway log entries.
+     */
+    public Object diagnosticsLogs(RequestContext requestContext, HttpServletResponse response) {
+        Object denial = requireGatewayPermission(requestContext, response, PermissionType.READ);
+        if (denial != null) {
+            return denial;
+        }
+        try {
+            JsonObject request = JsonParser.parseString(requestContext.readBody()).getAsJsonObject();
+            Integer count = optInt(request, "count");
+            String projectFilter = optString(request, "project");
+            String patternFilter = optString(request, "pattern");
+            Boolean errorsOnly = optBoolean(request, "errorsOnly");
+
+            int maxCount = count == null ? 50 : Math.min(count, 200);
+            boolean onlyErrors = errorsOnly != null && errorsOnly;
+
+            List<LogCaptureService.LogEntry> entries;
+            if (onlyErrors) {
+                entries = logCaptureService.getRecentErrors(maxCount, projectFilter, patternFilter);
+            } else {
+                entries = logCaptureService.getRecentEntries(maxCount);
+            }
+
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("count", entries.size());
+            payload.put("entries", entries.stream().map(LogCaptureService.LogEntry::toMap).toList());
+            return json(payload);
+        } catch (JsonParseException exception) {
+            return error(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "Request body must be JSON: " + exception.getMessage());
+        } catch (Exception exception) {
+            logger.warn("Log capture failed", exception);
+            return error(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, exception.getMessage());
         }
     }
 

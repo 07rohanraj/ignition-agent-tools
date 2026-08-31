@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" tests="15" skipped="0" failures="0" errors="0" timestamp="2026-08-30T17:02:55" hostname="AXLAP219" time="0.093">
+  <properties/>
+  <testcase name="validRunScriptCall()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.018"/>
+  <testcase name="runScriptNegativePollRate()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.006"/>
+  <testcase name="missingExpression()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.001"/>
+  <testcase name="validPropertyReference()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.004"/>
+  <testcase name="syntaxErrorIllegalToken()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.012"/>
+  <testcase name="validTagReference()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.001"/>
+  <testcase name="emptyExpressionSuggestions()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.002"/>
+  <testcase name="runScriptInvalidPollRate()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.002"/>
+  <testcase name="pythonImportDetected()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.001"/>
+  <testcase name="syntaxErrorUnmatchedParenthesis()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.002"/>
+  <testcase name="unknownPerspectiveFunctionIsWarningNotError()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.02"/>
+  <testcase name="validComplexExpression()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.002"/>
+  <testcase name="clientScopeFunctionWarning()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.002"/>
+  <testcase name="validSimpleArithmetic()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.003"/>
+  <testcase name="runScriptInvalidModulePath()" classname="com.axcend.ignition.agenttools.IgnitionExpressionValidatorTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

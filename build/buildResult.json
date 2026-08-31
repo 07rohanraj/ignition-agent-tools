@@ -4,11 +4,11 @@
     "moduleDescription": "Gateway REST toolkit for AI agents working on Ignition projects: Perspective view JSON validation, headless script console, tag/query/project inspection.",
     "version": "0.1.0-SNAPSHOT",
     "checksum": {
-        "checksum": "709b1e41dab1cc7e528af17994d6f8ad70068faacbd52b1b70aa9dc44299ad1a",
+        "checksum": "393e723e5ce2d79086a9f79fe3cc960d20f09981835ea6a503b2af59f4866102",
         "algorithm": "SHA256"
     },
     "fileName": "ai-agent-tools.unsigned.modl",
-    "fileSize": 35764,
+    "fileSize": 89055,
     "artifacts": {
         ":gateway": {
             "projectPath": ":gateway",

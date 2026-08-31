@@ -28,6 +28,63 @@ The skill system provides specialized instructions to AI agents working on Ignit
 
 ---
 
+## SDK Knowledge Layer (Ignition 8.3.7)
+
+### Purpose
+
+The SDK knowledge layer provides a versioned API reference for Ignition 8.3.7. It is NOT a replacement for the official Javadocs — it is a **map** that helps agents find the right APIs quickly without hallucinating.
+
+### Architecture
+
+```
+             OFFICIAL IGNITION SDK
+                       │
+                 source of truth
+                       │
+                       ▼
+             YOUR SDK KNOWLEDGE
+                       │
+          verified API + examples
+                       │
+                       ▼
+                 YOUR SKILLS
+                       │
+          task-specific instructions
+                       │
+                       ▼
+                    AGENT
+                       │
+                       ▼
+                    CODE
+```
+
+### Skills in `ignition-agent-tools/skills/`
+
+| Skill | Purpose | When to Use |
+|-------|---------|-------------|
+| `ignition-sdk-8.3.7/` | Foundation SDK knowledge | Before implementing any Ignition API |
+| `perspective/` | Perspective module knowledge | Working with views/bindings |
+| `module-development/` | Module development patterns | Creating/modifying Ignition modules |
+| `binding-validation/` | Binding validation patterns | Validating/diagnosing bindings |
+
+### API Verification Procedure
+
+Before using ANY Ignition API:
+
+1. Find candidate class in SDK knowledge
+2. Does class exist in 8.3.7? → If NO, find alternative
+3. Verify method signature
+4. Verify parameters
+5. Verify return type
+6. Verify visibility
+7. Code
+
+### API Rules
+
+See `API_RULES.md` for the project's contract with the Ignition SDK.
+
+---
+
 ## Directory Structure
 
 ```
@@ -100,7 +157,18 @@ C:\Program Files\Inductive Automation\Ignition\data\projects\
 ├── AGENTS.md                                        # Agent instructions (mandatory read)
 ├── README.md                                        # Project overview
 └── ignition-agent-tools/                            # This documentation folder
-    └── SKILL-ARCHITECTURE.md                        # This file
+    ├── SKILL-ARCHITECTURE.md                        # This file
+    ├── API_RULES.md                                 # Project's contract with Ignition SDK
+    └── skills/                                      # SDK knowledge layer
+        ├── ignition-sdk-8.3.7/                      # Foundation SDK knowledge
+        │   ├── SKILL.md
+        │   └── patterns/                            # Verified implementation patterns
+        ├── perspective/                             # Perspective module knowledge
+        │   └── SKILL.md
+        ├── module-development/                      # Module development patterns
+        │   └── SKILL.md
+        └── binding-validation/                      # Binding validation patterns
+            └── SKILL.md
 ```
 
 ---
@@ -126,10 +194,50 @@ C:\Program Files\Inductive Automation\Ignition\data\projects\
     Patterns &    Gateway API  Component
     Conventions   Discovery    Schemas
           │            │            │
-          └────────────┼────────────┘
-                       ▼
-                 VALIDATION
+           └────────────┼────────────┘
+                        ▼
+                  VALIDATION & DIAGNOSTICS
 ```
+
+### Layer 3: Validation & Diagnostics (`validate/` + `diagnostic/`)
+
+**Purpose:** Static and dynamic analysis of Perspective views.
+
+**Static Validation (`validate/`):**
+- `PerspectiveViewValidator.java` — Structural validation of view JSON
+- `ComponentCatalog.java` — Known component types and their properties
+- `ValidationIssue.java` — Issue record with error codes and paths
+
+**Dynamic Diagnostics (`diagnostic/`):**
+- `DiagnosticService.java` — Core diagnostic engine that reads view JSON from project resources and validates components, bindings, and structure
+- `LogCaptureService.java` — Captures and filters gateway log entries for debugging
+- `DiagnosticCollector.java` — Common interface for collecting diagnostic issues
+- `ViewDiagnostics.java` — View-level diagnostic result with component and binding counts
+- `ComponentDiagnostics.java` — Component-level diagnostic result
+- `BindingDiagnostics.java` — Binding-level diagnostic result
+- `DiagnosticIssue.java` — Issue record with error codes, categories, and paths
+- `ViewStats.java` — View statistics record
+
+**Diagnostic Error Codes:**
+- `VIEW_NOT_FOUND` — View not found in project
+- `INVALID_VIEW_DOCUMENT` — View JSON is not a valid Perspective document
+- `MISSING_ROOT_COMPONENT` — View has no root component
+- `MISSING_COMPONENT_TYPE` — Component has no `type` field
+- `DEPRECATED_TYPE_ALIAS` — Component type is a deprecated alias
+- `UNKNOWN_COMPONENT_TYPE` — Component type not in standard catalog
+- `EMPTY_TAG_PATH` — Tag binding has empty `tagPath`
+- `MISSING_BINDING_TYPE` — Binding has no `type` field
+- `MISSING_BINDING_CONFIG` — Binding has no `config` object
+- `QUERY_NOT_FOUND` — Named query not found in project
+- `UNKNOWN_BINDING_TYPE` — Binding type not recognized
+- `COMPONENT_NOT_FOUND` — Component not found at specified path
+- `DIAGNOSTIC_ERROR` — Internal error during diagnostic analysis
+
+**API Endpoints:**
+- `GET /data/agent-tools/diagnostics/view?project=...&view=...` — View-level diagnostics
+- `GET /data/agent-tools/diagnostics/component?project=...&view=...&path=...` — Component diagnostics
+- `GET /data/agent-tools/diagnostics/binding?project=...&view=...&path=...&property=...` — Binding diagnostics
+- `GET /data/agent-tools/diagnostics/logs?project=...&lines=...&errorsOnly=...` — Log capture
 
 ### Layer 1: Conventions & Patterns (`ignition-conventions`)
 

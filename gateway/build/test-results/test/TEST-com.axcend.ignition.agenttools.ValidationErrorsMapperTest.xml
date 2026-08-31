@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.axcend.ignition.agenttools.ValidationErrorsMapperTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-08-30T17:02:57" hostname="AXLAP219" time="0.039">
+  <properties/>
+  <testcase name="errorIssuesBecomeFieldMessagesKeyedOnPath()" classname="com.axcend.ignition.agenttools.ValidationErrorsMapperTest" time="0.034"/>
+  <testcase name="validationExceptionBuiltWhenErrorsPresent()" classname="com.axcend.ignition.agenttools.ValidationErrorsMapperTest" time="0.001"/>
+  <testcase name="emptyInputYieldsEmptyErrors()" classname="com.axcend.ignition.agenttools.ValidationErrorsMapperTest" time="0.001"/>
+  <testcase name="validationExceptionNullWhenNoErrors()" classname="com.axcend.ignition.agenttools.ValidationErrorsMapperTest" time="0.001"/>
+  <testcase name="warningIssuesBecomeTopLevelMessages()" classname="com.axcend.ignition.agenttools.ValidationErrorsMapperTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

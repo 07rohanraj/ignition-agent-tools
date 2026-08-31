@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.axcend.ignition.agenttools.ComponentCatalogTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-08-23T09:53:34" hostname="AXLAP219" time="0.072">
+<testsuite name="com.axcend.ignition.agenttools.ComponentCatalogTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-08-30T17:02:54" hostname="AXLAP219" time="0.039">
   <properties/>
-  <testcase name="aliasesMapToCanonicalIds()" classname="com.axcend.ignition.agenttools.ComponentCatalogTest" time="0.054"/>
+  <testcase name="aliasesMapToCanonicalIds()" classname="com.axcend.ignition.agenttools.ComponentCatalogTest" time="0.027"/>
   <testcase name="everyKnownTypeIsDottedAndPrefixed()" classname="com.axcend.ignition.agenttools.ComponentCatalogTest" time="0.003"/>
-  <testcase name="unknownAndNullTypesAreNotKnown()" classname="com.axcend.ignition.agenttools.ComponentCatalogTest" time="0.003"/>
+  <testcase name="unknownAndNullTypesAreNotKnown()" classname="com.axcend.ignition.agenttools.ComponentCatalogTest" time="0.001"/>
   <testcase name="flexStyleKeysAndBindingTypesArePopulated()" classname="com.axcend.ignition.agenttools.ComponentCatalogTest" time="0.001"/>
-  <testcase name="stockComponentsAreKnown()" classname="com.axcend.ignition.agenttools.ComponentCatalogTest" time="0.002"/>
-  <testcase name="canonicalIdsHaveNoAliasEntry()" classname="com.axcend.ignition.agenttools.ComponentCatalogTest" time="0.002"/>
+  <testcase name="stockComponentsAreKnown()" classname="com.axcend.ignition.agenttools.ComponentCatalogTest" time="0.001"/>
+  <testcase name="canonicalIdsHaveNoAliasEntry()" classname="com.axcend.ignition.agenttools.ComponentCatalogTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

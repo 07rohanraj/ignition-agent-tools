@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.axcend.ignition.agenttools.JsonSchemaValidatorTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-08-30T17:02:55" hostname="AXLAP219" time="0.042">
+  <properties/>
+  <testcase name="nullSchemaThrows()" classname="com.axcend.ignition.agenttools.JsonSchemaValidatorTest" time="0.006"/>
+  <testcase name="wrongTypeYieldsViolation()" classname="com.axcend.ignition.agenttools.JsonSchemaValidatorTest" time="0.028"/>
+  <testcase name="missingRequiredFieldYieldsViolation()" classname="com.axcend.ignition.agenttools.JsonSchemaValidatorTest" time="0.003"/>
+  <testcase name="validDocumentYieldsNoViolations()" classname="com.axcend.ignition.agenttools.JsonSchemaValidatorTest" time="0.002"/>
+  <system-out><![CDATA[22:32:55.143 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.TypeValidator -- validate( {"count":"not-an-integer"}, {"type":"object","properties":{"count":{"type":"integer"}},"required":["count"]}, $)
+22:32:55.150 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.PropertiesValidator -- validate( {"count":"not-an-integer"}, {"type":"object","properties":{"count":{"type":"integer"}},"required":["count"]}, $)
+22:32:55.151 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.TypeValidator -- validate( "not-an-integer", {"type":"object","properties":{"count":{"type":"integer"}},"required":["count"]}, $.count)
+22:32:55.153 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.RequiredValidator -- validate( {"count":"not-an-integer"}, {"type":"object","properties":{"count":{"type":"integer"}},"required":["count"]}, $)
+22:32:55.159 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.TypeValidator -- validate( {"other":1}, {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}, $)
+22:32:55.159 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.PropertiesValidator -- validate( {"other":1}, {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}, $)
+22:32:55.160 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.RequiredValidator -- validate( {"other":1}, {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}, $)
+22:32:55.162 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.TypeValidator -- validate( {"name":"Motor"}, {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}, $)
+22:32:55.163 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.PropertiesValidator -- validate( {"name":"Motor"}, {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}, $)
+22:32:55.163 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.TypeValidator -- validate( "Motor", {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}, $.name)
+22:32:55.163 [Test worker] DEBUG com.inductiveautomation.ignition.common.jsonschema.RequiredValidator -- validate( {"name":"Motor"}, {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}, $)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

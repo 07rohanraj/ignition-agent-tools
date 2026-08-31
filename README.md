@@ -1,8 +1,8 @@
 # AI Agent Tools (Ignition Gateway Module)
 
 Gateway-side REST toolkit that lets AI agents work directly against a running Ignition 8.3 gateway:
-validate Perspective view JSON, run headless Jython, browse/read tags, run named queries, and
-list project resources.
+validate Perspective view JSON, run headless Jython, browse/read tags, run named queries,
+list project resources, and diagnose view issues.
 
 - Module id: `com.axcend.ignition.agenttools`
 - Base URL: `http://localhost:8088/data/agent-tools`
@@ -22,6 +22,10 @@ list project resources.
 | POST | `/query/run` | `{project?, queryPath, parameters?}` | Execute a stored named query. Datasets come back as `{kind:"dataset", columns, rows}`. |
 | GET  | `/projects` | - | Project names |
 | POST | `/projects/resources` | `{project, contains?, maxResults?}` | List project resources (views, named queries, scripts...), optionally filtered by path substring |
+| POST | `/diagnostics/view` | `{project, viewPath}` | Get comprehensive diagnostics for a Perspective view |
+| POST | `/diagnostics/component` | `{project, viewPath, componentPath}` | Get diagnostics for a specific component |
+| POST | `/diagnostics/binding` | `{project, viewPath, componentPath, propertyPath}` | Get diagnostics for a specific binding |
+| POST | `/diagnostics/logs` | `{count?, project?, pattern?, errorsOnly?}` | Get recent gateway log entries |
 
 Read-style routes check gateway session READ permission (anonymous passes on this dev gateway).
 `/script/exec` and `/query/run` are intentionally dev-open (no session gate) because agents call
@@ -47,6 +51,60 @@ Error codes include: `MISSING_REQUIRED_KEY`, `MISSING_ROOT_TYPE`, `MISSING_META`
 
 Known real-view fact: Ignition does not persist `meta.id`; it is assigned at runtime, so its
 absence is never reported.
+
+### diagnostics/view response shape
+
+```json
+{
+  "viewPath": "Dashboard/Main",
+  "valid": false,
+  "errors": [
+    {
+      "code": "BINDING_EVALUATION_FAILED",
+      "severity": "ERROR",
+      "category": "BINDING",
+      "message": "Named query not found: GetAlarms",
+      "path": "root/Table.props.data"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "UNKNOWN_COMPONENT_TYPE",
+      "severity": "WARNING",
+      "category": "COMPONENT",
+      "message": "Component type 'custom.MyComponent' is not in the standard catalog",
+      "path": "root/CustomContainer/MyComponent"
+    }
+  ],
+  "stats": {
+    "componentCount": 15,
+    "bindingCount": 8,
+    "errorCount": 1,
+    "warningCount": 2
+  }
+}
+```
+
+Diagnostic error codes: `VIEW_NOT_FOUND`, `INVALID_VIEW_DOCUMENT`, `MISSING_ROOT_COMPONENT`,
+`MISSING_COMPONENT_TYPE`, `MISSING_META`, `MISSING_COMPONENT_NAME`, `MISSING_PROPS`,
+`DEPRECATED_TYPE_ALIAS`, `UNKNOWN_COMPONENT_TYPE`, `EMPTY_TAG_PATH`, `MISSING_BINDING_TYPE`,
+`MISSING_BINDING_CONFIG`, `MISSING_TAG_PATH`, `MISSING_QUERY_PATH`, `QUERY_NOT_FOUND`,
+`MISSING_EXPRESSION`, `MISSING_PROPERTY_PATH`, `UNKNOWN_BINDING_TYPE`, `COMPONENT_NOT_FOUND`.
+
+### diagnostics/logs response shape
+
+```json
+{
+  "count": 2,
+  "entries": [
+    {
+      "level": "ERROR",
+      "timestamp": "2026/08/25 14:30:15",
+      "message": "Named query 'GetAlarms' not found in project 'MyProject'"
+    }
+  ]
+}
+```
 
 ## Script exec contract
 
@@ -87,5 +145,13 @@ gateway/src/main/java/com/axcend/ignition/agenttools/
     ComponentCatalog.java           known ia.* component ids + aliases
     PerspectiveViewValidator.java   structural rules + ValidationResult
     ValidationIssue.java            issue record
+  diagnostic/
+    DiagnosticService.java          view/component/binding diagnostics
+    LogCaptureService.java          gateway log capture
+    ViewDiagnostics.java            view diagnostic result
+    ComponentDiagnostics.java       component diagnostic result
+    BindingDiagnostics.java         binding diagnostic result
+    DiagnosticIssue.java            diagnostic issue record
+    ViewStats.java                  view statistics
 gateway/src/test/java/...          validator unit tests
 ```
